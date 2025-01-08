@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Video Stream</title>
+    <script src="https://cdn.dashjs.org/latest/dash.all.debug.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #89CFF0; 
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #videoContainer {
+            width: 90%;
+            max-width: 800px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        video {
+            width: 100%; 
+        }
+        #controls {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+            background: rgba(255,255,255,0.9);
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #000; 
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #444; 
+        }
+    </style>
+</head>
+<body>
+    <div id="videoContainer">
+        <h1>Video Streaming Demo</h1>
+        <video id="videoPlayer" controls></video>
+        <div id="controls">
+            <button onclick="move(-10)">Back 10s</button>
+            <button onclick="move(10)">Forward 10s</button>
+            <button onclick="pauseVideo()">Pause/Play</button>
+            <button onclick="jumpToLive()">Jump to Live -5s</button>
+            <button onclick="takeScreenshot()">Take Screenshot</button>
+        </div>
+        <canvas style="display:none;"></canvas>
+    </div>
+    <script>
+        var video = document.querySelector('#videoPlayer');
+        var player = dashjs.MediaPlayer().create();
+        player.initialize(video, 'output/output.mpd', true);
+
+        player.updateSettings({
+            streaming: {
+                delay: {
+                    liveDelay: 30, 
+                }
+            }
+        });
+
+        function move(seconds) {
+            video.currentTime += seconds;
+        }
+
+        function pauseVideo() {
+            if (video.paused) {
+                video.play();
+            } else {
+                video.pause();
+            }
+        }
+
+        function jumpToLive() {
+            var seekable = video.seekable;
+            if (seekable.length > 0) {
+                var livePoint = seekable.end(seekable.length - 1) - 10; 
+                video.currentTime = livePoint > seekable.start(seekable.length - 1) ? livePoint : seekable.start(seekable.length - 1);
+            }
+        }
+
+        function takeScreenshot() {
+            var canvas = document.querySelector('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            var dataURI = canvas.toDataURL('image/png');
+            var a = document.createElement('a');
+            a.href = dataURI;
+            a.download = 'screenshot.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>
